@@ -189,7 +189,18 @@ if root_agent_var_name in globals() and globals()[root_agent_var_name]:
                                user_id=USER_ID,
                                session_id=SESSION_ID
                               )
-
+        final_session = await session_service.get_session(app_name=APP_NAME,
+                                                            user_id= USER_ID,
+                                                            session_id=SESSION_ID)
+        if final_session:
+            # Use .get() for safer access to potentially missing keys
+            print(f"Final Preference: {final_session.state.get('user_preference_temperature_unit', 'Not Set')}")
+            print(f"Final Last Weather Report (from output_key): {final_session.state.get('last_weather_report', 'Not Set')}")
+            print(f"Final Last City Checked (by tool): {final_session.state.get('last_city_checked_stateful', 'Not Set')}")
+            # Print full state for detailed view
+            print(f"Full State Dict: {final_session.state}") # For detailed view
+        else:
+            print("\n❌ Error: Could not retrieve final session state.")
 
 async def main():
     session = await init_session(APP_NAME,USER_ID,SESSION_ID)
@@ -216,5 +227,8 @@ if __name__ == "__main__": # Ensures this runs only when script is executed dire
     try:
         # This creates an event loop, runs your async function, and closes the loop.
         asyncio.run(run_stateful_conversation())
+        print("\n--- Inspecting Final Session State ---")
+
+
     except Exception as e:
         print(f"An error occurred: {e}")
