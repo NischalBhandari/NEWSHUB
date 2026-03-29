@@ -5,7 +5,7 @@ from google.adk.runners import Runner
 from google.genai import types # For creating message Content/Parts
 import asyncio
 from dotenv import load_dotenv
-from news.hello import say_hello, say_goodbye
+from hello import say_hello, say_goodbye
 
 load_dotenv()
 # Use one of the model constants defined earlier
