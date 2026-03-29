@@ -1,0 +1,5 @@
+.adk/
+.venv/
+news/.adk/
+news/.venv/
+news/.env
