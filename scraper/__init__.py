@@ -1,0 +1,1 @@
+from .kathmandupost_com import fetch_news
