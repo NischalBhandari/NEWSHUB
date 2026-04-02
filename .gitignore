@@ -3,3 +3,28 @@
 news/.adk/
 news/.venv/
 news/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database files (if using SQLite)
+*.db
+*.sqlite3
+
+# Alembic cache (optional)
+alembic/__pycache__/

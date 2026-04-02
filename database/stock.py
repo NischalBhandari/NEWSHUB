@@ -1,15 +1,16 @@
 from database.db import SessionLocal
-from database.models import stock
+from models import Stock
 
 def insert_stock(stockData):
     session = SessionLocal()
     try:
-        stock = stock(
+        stock = Stock(
             symbol=stockData["symbol"],
-            sector=stockData["link"],
+            description=stockData["description"],
             full_name=stockData["full_name"],
-            exchange_=stockData.get("exchange", "NEPSE"),
+            sector=stockData.get("sector", "none"),
             logo_urls=stockData.get("logo_urls"),
+            type = stockData.get("type", "stock"),
             exchange_logo=stockData.get("exchange_logo", "none"),
             exchange = stockData.get("exchange", "NEPSE"),
             is_master=stockData.get("is_master", False)

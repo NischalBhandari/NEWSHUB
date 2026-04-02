@@ -1,46 +1,51 @@
-from database import get_connection
+from sqlalchemy.orm import sessionmaker
+from database.db import engine
+from models.news import News
+
+Session = sessionmaker(bind=engine)
 
 def insert_news(article):
-    conn  = get_connection()
+    session = Session()
     try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO news (title, link, description, content, published_at, source)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                ON CONFLICT (link) DO NOTHING;
-            """, (
-                article.get("title"),
-                article.get("link"),
-                article.get("description"),
-                article.get("content"),
-                article.get("published_at"),
-                article.get("source")
-            ))
-        conn.commit()
+        # Only include fields that exist in the model
+        allowed_keys = {"title", "link", "description", "content", "published_at", "source"}
+        filtered_article = {k: v for k, v in article.items() if k in allowed_keys}
+
+        # Required field check
+        if "link" not in filtered_article or not filtered_article["link"]:
+            print("Skipping article with no link")
+            return
+
+        news_item = News(**filtered_article)
+        session.add(news_item)
+        session.commit()
+        print(f"Inserted: {filtered_article.get('title')}")
     except Exception as e:
-        print("Error inserting article:", e)
+        session.rollback()
+        print(f"Error inserting article '{article.get('title')}': {e}")
     finally:
-        conn.close()
+        session.close()
 
 def insert_news_batch(articles):
-    conn = get_connection()
+    if not articles:
+        return
+
+    session = Session()
     try:
-        with conn.cursor() as cur:
-            args_str = ",".join(
-                cur.mogrify("(%s,%s,%s,%s,%s,%s)", (
-                    a.get("title"),
-                    a.get("link"),
-                    a.get("description"),
-                    a.get("content"),
-                    a.get("published_at"),
-                    a.get("source")
-                )).decode("utf-8") for a in articles
-            )
-            cur.execute(f"""
-                INSERT INTO news (title, link, description, content, published_at, source)
-                VALUES {args_str}
-                ON CONFLICT (link) DO NOTHING;
-            """)
-        conn.commit()
+        allowed_keys = {"title", "link", "description", "content", "published_at", "source"}
+        news_objects = []
+        for a in articles:
+            filtered = {k: v for k, v in a.items() if k in allowed_keys}
+            if "link" not in filtered or not filtered["link"]:
+                continue
+            news_objects.append(News(**filtered))
+
+        if news_objects:
+            session.bulk_save_objects(news_objects)
+            session.commit()
+            print(f"Inserted {len(news_objects)} articles")
+    except Exception as e:
+        session.rollback()
+        print("Error inserting batch:", e)
     finally:
-        conn.close()
+        session.close()

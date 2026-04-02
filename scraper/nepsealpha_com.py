@@ -1,6 +1,6 @@
 import cloudscraper
 from bs4 import BeautifulSoup
-
+from database.stock import insert_stock
 def fetch_share_prices():
     # Using the AJAX URL you found
     url = "https://nepsealpha.com/trading-signals/funda?fsk=kvT7XzF1p7J77IJM&type=ajax"
@@ -50,11 +50,33 @@ def fetch_share_prices():
 
 def fetch_all_shares():
         # Using the AJAX URL you found
-    url = "https://nepsealpha.com/trading-signals/funda?fsk=kvT7XzF1p7J77IJM"
-
+    url = "https://nepsealpha.com/trading/1/search?limit=500&query=&fsk=fs"
+    seen = set()
     scraper = cloudscraper.create_scraper()
+    shares = []
+    all_shares = []
     response = scraper.get(url)
-    data = response.json()
-    print(data)
+    datas = response.json()
+    print(datas)
+    for data in datas:
+        print(data)
+        shares.append({
+            "symbol": data["symbol"],
+            "description": data["description"],
+            "full_name": data["full_name"],
+            "sector": data["sector"],
+            "type": data["type"],
+            "logo_urls": data["logo_urls"],
+            "exchange_logo": data["exchange_logo"],
+            "is_master": data["is_master"],
+        })
+    for item in shares:
+        if item["symbol"] not in seen:
+            seen.add(item["symbol"])
+            all_shares.append(item)
+
+    for data in all_shares:
+        insert_stock(data)
+        #print(f"Symbol: {data['symbol']} | description: {data['description']} | type: {data['type']} | Exchange: {data['exchange']}")
 if __name__ == "__main__":
     fetch_all_shares()

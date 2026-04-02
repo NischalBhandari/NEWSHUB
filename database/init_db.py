@@ -1,5 +1,5 @@
 from database.db import engine
-from database.models.stock import Base
+from models.stock import Base
 
 def init_db():
     Base.metadata.create_all(engine)
