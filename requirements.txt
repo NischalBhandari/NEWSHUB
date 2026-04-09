@@ -3,3 +3,5 @@ psycopg2
 cloudscraper
 sqlalchemy
 alembic
+fastapi
+uvicorn[standard]

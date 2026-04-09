@@ -1,6 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
+load_dotenv()  # Load environment variables from .env file
 
-DATABASE_URL = 'postgresql://postgres:password@localhost:5432/newsdb'
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set in environment variables")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)

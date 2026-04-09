@@ -34,7 +34,6 @@ def upgrade() -> None:
     sa.Column('created_at', sa.TIMESTAMP(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    op.drop_table('news')
     # ### end Alembic commands ###
 
 

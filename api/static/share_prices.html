@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Share Prices — AIHub</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      background: #f4f5f7;
+      color: #172b4d;
+    }
+
+    /* ---- Header ---- */
+    header {
+      background: #0052cc;
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.2px; }
+    header span { font-size: 12px; opacity: 0.75; }
+
+    /* ---- Controls ---- */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      background: white;
+      border-bottom: 1px solid #dfe1e6;
+      flex-wrap: wrap;
+    }
+
+    .controls label { font-size: 11px; font-weight: 600; color: #5e6c84; text-transform: uppercase; }
+
+    .controls select,
+    .controls input {
+      padding: 6px 10px;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      font-size: 13px;
+      background: white;
+      color: #172b4d;
+      outline: none;
+    }
+    .controls select:focus,
+    .controls input:focus { border-color: #0052cc; }
+
+    .controls input[type="text"] { width: 160px; }
+
+    .sep { width: 1px; height: 24px; background: #dfe1e6; }
+
+    #count { margin-left: auto; font-size: 12px; color: #5e6c84; }
+
+    /* ---- Table wrapper ---- */
+    .table-wrap {
+      margin: 16px 24px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #dfe1e6;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      white-space: nowrap;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f4f5f7;
+      padding: 9px 12px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #5e6c84;
+      border-bottom: 2px solid #dfe1e6;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { background: #ebecf0; }
+    thead th.sorted-asc::after  { content: " ▲"; }
+    thead th.sorted-desc::after { content: " ▼"; }
+
+    tbody tr { border-bottom: 1px solid #f4f5f7; transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8f9ff; }
+
+    td { padding: 8px 12px; }
+
+    /* ---- Cell styles ---- */
+    .sym { font-weight: 700; color: #0052cc; font-size: 13px; }
+
+    .change.pos { color: #00875a; font-weight: 600; }
+    .change.neg { color: #de350b; font-weight: 600; }
+    .change.neu { color: #5e6c84; }
+
+    .quality-strong { color: #00875a; font-weight: 600; }
+    .quality-weak   { color: #de350b; font-weight: 600; }
+
+    .stars { letter-spacing: -1px; }
+
+    .vs-cell.over  { color: #de350b; font-size: 11px; }
+    .vs-cell.under { color: #00875a; font-size: 11px; }
+    .vs-cell.dash  { color: #b3bac5; font-size: 11px; }
+
+    .num { text-align: right; }
+
+    /* ---- Empty / loading ---- */
+    .state {
+      padding: 48px;
+      text-align: center;
+      color: #5e6c84;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Share Prices</h1>
+    <span>NEPSE daily price &amp; fundamentals</span>
+  </div>
+</header>
+
+<div class="controls">
+  <label>Date</label>
+  <select id="dateSelect"><option value="">All dates</option></select>
+
+  <div class="sep"></div>
+
+  <label>Sector</label>
+  <input type="text" id="sectorInput" placeholder="e.g. Banking" />
+
+  <label>Symbol</label>
+  <input type="text" id="symbolInput" placeholder="e.g. NABIL" />
+
+  <span id="count"></span>
+</div>
+
+<div class="table-wrap">
+  <table id="priceTable">
+    <thead>
+      <tr>
+        <th data-col="trade_date">Date</th>
+        <th data-col="symbol">Symbol</th>
+        <th data-col="sector">Sector</th>
+        <th data-col="ltp" class="num">LTP</th>
+        <th data-col="change_percent" class="num">Change %</th>
+        <th data-col="stars">Stars</th>
+        <th data-col="quality">Quality</th>
+        <th data-col="pe" class="num">P/E</th>
+        <th data-col="pb" class="num">P/B</th>
+        <th data-col="roe" class="num">ROE %</th>
+        <th data-col="roa" class="num">ROA %</th>
+        <th data-col="graham_distance" class="num">Graham Dist.</th>
+        <th data-col="dividend_yield" class="num">Div Yield %</th>
+        <th data-col="pe_vs_sector">P/E vs Sect.</th>
+        <th data-col="pb_vs_sector">P/B vs Sect.</th>
+        <th data-col="roe_vs_sector">ROE vs Sect.</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="16" class="state">Loading…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const API = "http://localhost:8000";
+
+  let allRows   = [];
+  let sortCol   = "trade_date";
+  let sortAsc   = false;
+
+  // ---- Fetch available dates ----
+  async function loadDates() {
+    const res  = await fetch(`${API}/share-prices/dates`);
+    const dates = await res.json();
+    const sel  = document.getElementById("dateSelect");
+    dates.forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = d;
+      sel.appendChild(opt);
+    });
+    // Default to the most recent date
+    if (dates.length) {
+      sel.value = dates[0];
+      await loadPrices();
+    }
+  }
+
+  // ---- Fetch prices ----
+  async function loadPrices() {
+    const date   = document.getElementById("dateSelect").value;
+    const sector = document.getElementById("sectorInput").value.trim();
+    const symbol = document.getElementById("symbolInput").value.trim();
+
+    const params = new URLSearchParams();
+    if (date)   params.set("date",   date);
+    if (sector) params.set("sector", sector);
+    if (symbol) params.set("symbol", symbol);
+
+    document.getElementById("tbody").innerHTML =
+      '<tr><td colspan="16" class="state">Loading…</td></tr>';
+
+    const res  = await fetch(`${API}/share-prices?${params}`);
+    allRows    = await res.json();
+    renderTable();
+  }
+
+  // ---- Render ----
+  function renderTable() {
+    const sorted = [...allRows].sort((a, b) => {
+      const av = a[sortCol] ?? "";
+      const bv = b[sortCol] ?? "";
+      if (av < bv) return sortAsc ? -1 : 1;
+      if (av > bv) return sortAsc ?  1 : -1;
+      return 0;
+    });
+
+    document.getElementById("count").textContent =
+      `${sorted.length} row${sorted.length !== 1 ? "s" : ""}`;
+
+    if (sorted.length === 0) {
+      document.getElementById("tbody").innerHTML =
+        '<tr><td colspan="16" class="state">No data for the selected filters.</td></tr>';
+      return;
+    }
+
+    const rows = sorted.map((r) => `
+      <tr>
+        <td>${r.trade_date ?? "—"}</td>
+        <td class="sym">${r.symbol ?? "—"}</td>
+        <td>${r.sector ?? "—"}</td>
+        <td class="num">${fmt(r.ltp)}</td>
+        <td class="num ${changeClass(r.change_percent)}">${fmtChange(r.change_percent)}</td>
+        <td class="stars">${stars(r.stars)}</td>
+        <td class="${qualityClass(r.quality)}">${r.quality ?? "—"}</td>
+        <td class="num">${fmt(r.pe)}</td>
+        <td class="num">${fmt(r.pb)}</td>
+        <td class="num">${fmt(r.roe)}</td>
+        <td class="num">${fmt(r.roa)}</td>
+        <td class="num">${fmt(r.graham_distance)}</td>
+        <td class="num">${fmt(r.dividend_yield)}</td>
+        <td class="${vsClass(r.pe_vs_sector)}">${r.pe_vs_sector ?? "—"}</td>
+        <td class="${vsClass(r.pb_vs_sector)}">${r.pb_vs_sector ?? "—"}</td>
+        <td class="${vsClass(r.roe_vs_sector)}">${r.roe_vs_sector ?? "—"}</td>
+      </tr>`).join("");
+
+    document.getElementById("tbody").innerHTML = rows;
+  }
+
+  // ---- Helpers ----
+  function fmt(v)       { return v != null ? Number(v).toFixed(2) : "—"; }
+  function fmtChange(v) {
+    if (v == null) return "—";
+    return (v >= 0 ? "+" : "") + Number(v).toFixed(2) + "%";
+  }
+  function changeClass(v) {
+    if (v == null) return "change neu";
+    return v > 0 ? "change pos" : v < 0 ? "change neg" : "change neu";
+  }
+  function qualityClass(q) {
+    if (!q) return "";
+    return q.toLowerCase().includes("strong") ? "quality-strong" : "quality-weak";
+  }
+  function stars(n) {
+    if (n == null) return "—";
+    return "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
+  }
+  function vsClass(v) {
+    if (!v || v === "--") return "vs-cell dash";
+    const l = v.toLowerCase();
+    if (l.includes("over"))  return "vs-cell over";
+    if (l.includes("under")) return "vs-cell under";
+    return "vs-cell dash";
+  }
+
+  // ---- Sorting ----
+  document.querySelectorAll("thead th[data-col]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+      if (sortCol === col) sortAsc = !sortAsc;
+      else { sortCol = col; sortAsc = true; }
+
+      document.querySelectorAll("thead th").forEach((h) =>
+        h.classList.remove("sorted-asc", "sorted-desc"));
+      th.classList.add(sortAsc ? "sorted-asc" : "sorted-desc");
+
+      renderTable();
+    });
+  });
+
+  // ---- Filter events ----
+  document.getElementById("dateSelect").addEventListener("change", loadPrices);
+
+  let debounceTimer;
+  ["sectorInput", "symbolInput"].forEach((id) => {
+    document.getElementById(id).addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(loadPrices, 350);
+    });
+  });
+
+  // ---- Init ----
+  loadDates();
+</script>
+</body>
+</html>

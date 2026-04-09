@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:11434/api/generate -d \"{\\\\\"model\\\\\":\\\\\"deepseek-coder-v2\\\\\",\\\\\"prompt\\\\\":\\\\\"say hello\\\\\",\\\\\"stream\\\\\":false,\\\\\"format\\\\\":\\\\\"json\\\\\"}\")",
+      "Bash(pip show:*)"
+    ]
+  }
+}
